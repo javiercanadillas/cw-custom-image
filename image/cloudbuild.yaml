@@ -1,0 +1,46 @@
+steps:
+  - id: build
+    name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - -c
+      - |
+        OUTFILE="/workspace/data.txt"
+        SUFFIX=$(date +%Y%m%d%H%M%S)
+        IMAGE_URL="$REGION-docker.pkg.dev/_GCP_PROJECT_ID/$_AR_REPO_NAME/$_IMAGE_NAME:$SUFFIX"
+        # Build the image
+        docker build -t "$IMAGE_URL"
+
+        # Push the image
+        docker push "$IMAGE_URL"
+
+        # Export the image URL to be used in the next build step
+        echo "export IMAGE_URL=$IMAGE_URL" > env.cb
+    dir: image
+  
+  - id: update
+    waitFor:
+      - build
+    name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - -c
+      - |
+        # This gets the image URL from the previous build step
+        source env.cb
+
+        gcloud beta workstations configs update "$_WS_CONFIG_NAME" \
+          --project "$_GCP_PROJECT_ID" \
+          --region "$_GCP_REGION" \
+          --container-custom-image "$IMAGE_URL" \
+          --quiet && echo "Cloud Workstations config updated"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  automapSubstitutions: true
+
+substitutions:
+  _WS_CONFIG_NAME: main-config
+  _GCP_PROJECT_ID: $PROJECT_ID
+  _GCP_REGION: europe-west1
+  _AR_REPO_NAME: main

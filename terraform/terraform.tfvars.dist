@@ -1,0 +1,5 @@
+gcp_project_id              = "$PROJECT_ID"
+gcp_region                  = "$REGION"
+github_repo_owner           = "$GITHUB_OWNER"
+github_repo_name            = "$GITHUB_REPO_NAME"
+workstations_config_name    = "projects/$PROJECT_ID/locations/$REGION/workstationClusters/$WS_CLUSTER_NAME/workstationConfigs/$WS_CONFIG_NAME"
